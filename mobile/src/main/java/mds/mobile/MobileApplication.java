@@ -1,4 +1,4 @@
-package mobile.rn.back;
+package mds.mobile;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,14 +7,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @RestController
-public class BackApplication {
+public class MobileApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BackApplication.class, args);
+		SpringApplication.run(MobileApplication.class, args);
 	}
 
-	@GetMapping("/")
-	public String hello() {
-		return "Hello Melwin a";
-	}
+    @GetMapping("/")
+    public String exemple(){
+        return "Hello World!";
+    }
+
 }

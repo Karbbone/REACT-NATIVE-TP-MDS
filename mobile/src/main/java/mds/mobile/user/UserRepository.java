@@ -1,4 +1,4 @@
-package mobile.rn.back.user;
+package mds.mobile.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

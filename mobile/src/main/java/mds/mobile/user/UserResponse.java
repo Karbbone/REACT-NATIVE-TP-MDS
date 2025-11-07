@@ -1,4 +1,4 @@
-package mobile.rn.back.user;
+package mds.mobile.user;
 
 import java.util.UUID;
 

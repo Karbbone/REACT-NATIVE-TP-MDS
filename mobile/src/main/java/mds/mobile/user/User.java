@@ -1,4 +1,4 @@
-package mobile.rn.back.user;
+package mds.mobile.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
