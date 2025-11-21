@@ -5,4 +5,5 @@ export type RootStackParamList = {
   DocumentDetail: { id: string };
   DocumentForm: { id?: string };
   Profile: undefined; // si on expose directement l'écran profil dans le stack
+  CategoriesList: undefined;
 };

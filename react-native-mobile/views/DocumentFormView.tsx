@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { DocumentFile, useDocuments } from "../contexts/DocumentContext";
 import { RootStackParamList } from "../navigation/types";
+import { common, theme } from "../styles/theme";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Params = RootStackParamList["DocumentForm"];
@@ -20,12 +21,15 @@ const DocumentFormView: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation<Nav>();
   const { id } = (route.params as Params) || {};
-  const { byId, create, update } = useDocuments();
+  const { byId, create, update, categories } = useDocuments();
   const existing = id ? byId(id) : undefined;
 
   const [title, setTitle] = useState(existing?.title || "");
   const [content, setContent] = useState(existing?.content || "");
   const [file, setFile] = useState<DocumentFile | undefined>(existing?.file);
+  const [categoryId, setCategoryId] = useState<string | undefined>(
+    existing?.categoryId
+  );
 
   useEffect(() => {
     navigation.setOptions({ title: existing ? "Modifier" : "Nouveau" });
@@ -37,9 +41,9 @@ const DocumentFormView: React.FC = () => {
       return;
     }
     if (existing) {
-      update(existing.id, { title, content, file });
+      update(existing.id, { title, content, file, categoryId });
     } else {
-      create({ title, content, file });
+      create({ title, content, file, categoryId });
     }
     navigation.goBack();
   };
@@ -81,10 +85,7 @@ const DocumentFormView: React.FC = () => {
           {existing ? "Enregistrer" : "Créer"}
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.saveBtn, { backgroundColor: "#5856D6", marginTop: 8 }]}
-        onPress={pickFile}
-      >
+      <TouchableOpacity style={[styles.attachBtn]} onPress={pickFile}>
         <Text style={styles.saveText}>Joindre un fichier</Text>
       </TouchableOpacity>
       {file && (
@@ -92,23 +93,71 @@ const DocumentFormView: React.FC = () => {
           Fichier: {file.name} {file.mimeType ? `(${file.mimeType})` : ""}
         </Text>
       )}
+      <Text style={styles.sectionLabel}>Catégorie</Text>
+      <View style={styles.catContainer}>
+        {categories.map((c) => (
+          <TouchableOpacity
+            key={c.id}
+            style={[
+              styles.catChip,
+              categoryId === c.id && styles.catChipSelected,
+            ]}
+            onPress={() =>
+              setCategoryId(categoryId === c.id ? undefined : c.id)
+            }
+          >
+            <Text
+              style={[
+                styles.catChipText,
+                categoryId === c.id && styles.catChipTextSelected,
+              ]}
+            >
+              {c.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        {categories.length === 0 && (
+          <Text style={styles.emptyCats}>
+            Aucune catégorie (créez-en dans l'onglet Catégories)
+          </Text>
+        )}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
+  container: common.container,
+  input: { ...common.input, marginBottom: theme.spacing(1.5) },
   textArea: { height: 160, textAlignVertical: "top" },
-  saveBtn: { backgroundColor: "#34C759", padding: 14, borderRadius: 8 },
-  saveText: { color: "#fff", fontWeight: "600", textAlign: "center" },
-  fileMeta: { marginTop: 8, color: "#444" },
+  saveBtn: { ...common.buttonBase, backgroundColor: theme.colors.success },
+  attachBtn: {
+    ...common.buttonBase,
+    backgroundColor: theme.colors.primaryAlt,
+    marginTop: theme.spacing(1),
+  },
+  saveText: common.buttonText,
+  fileMeta: { marginTop: theme.spacing(1), color: theme.colors.textSecondary },
+  sectionLabel: {
+    marginTop: theme.spacing(2.5),
+    marginBottom: theme.spacing(1),
+    fontWeight: "600",
+    fontSize: theme.typography.body,
+    color: theme.colors.text,
+  },
+  catContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing(1),
+  },
+  catChip: common.chip,
+  catChipSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  catChipText: { color: theme.colors.text },
+  catChipTextSelected: { color: "#fff", fontWeight: "600" },
+  emptyCats: { color: theme.colors.textSecondary },
 });
 
 export default DocumentFormView;

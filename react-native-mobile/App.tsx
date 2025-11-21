@@ -6,6 +6,7 @@ import React from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { DocumentProvider } from "./contexts/DocumentContext";
 import { RootStackParamList } from "./navigation/types";
+import CategoriesListView from "./views/CategoriesListView";
 import DocumentDetailView from "./views/DocumentDetailView";
 import DocumentFormView from "./views/DocumentFormView";
 import DocumentsListView from "./views/DocumentsListView";
@@ -37,8 +38,13 @@ const DocumentsStackScreens = () => (
 );
 
 const MainTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false }}>
-    <Tab.Screen name="Documents" component={DocumentsStackScreens} />
+  <Tab.Navigator screenOptions={{ headerShown: true }}>
+    <Tab.Screen
+      name="Documents"
+      component={DocumentsStackScreens}
+      options={{ headerShown: false }}
+    />
+    <Tab.Screen name="Catégories" component={CategoriesListView} />
     <Tab.Screen name="Profil" component={ProfileView} />
   </Tab.Navigator>
 );

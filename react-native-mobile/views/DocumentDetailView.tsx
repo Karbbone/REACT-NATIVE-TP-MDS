@@ -13,6 +13,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useDocuments } from "../contexts/DocumentContext";
 import { RootStackParamList } from "../navigation/types";
+import { common, theme } from "../styles/theme";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type RouteParams = RootStackParamList["DocumentDetail"];
@@ -104,25 +105,43 @@ const DocumentDetailView: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 8 },
-  meta: { fontSize: 12, color: "#666", marginBottom: 16 },
-  content: { fontSize: 15, lineHeight: 20 },
-  actions: { flexDirection: "row", marginTop: 24, gap: 12 },
+  container: common.container,
+  title: {
+    fontSize: theme.typography.titleLg,
+    fontWeight: "700",
+    marginBottom: theme.spacing(1),
+    color: theme.colors.text,
+  },
+  meta: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing(2),
+  },
+  content: {
+    fontSize: theme.typography.body,
+    lineHeight: 20,
+    color: theme.colors.text,
+  },
+  actions: {
+    flexDirection: "row",
+    marginTop: theme.spacing(3),
+    gap: theme.spacing(1.5),
+  },
   editBtn: {
-    backgroundColor: "#007AFF",
-    padding: 12,
-    borderRadius: 8,
+    ...common.buttonBase,
     flex: 1,
+    backgroundColor: theme.colors.primary,
   },
   deleteBtn: {
-    backgroundColor: "#FF3B30",
-    padding: 12,
-    borderRadius: 8,
+    ...common.buttonBase,
     flex: 1,
+    backgroundColor: theme.colors.danger,
   },
-  openBtn: { backgroundColor: "#5856D6", padding: 12, borderRadius: 8 },
-  btnText: { color: "#fff", textAlign: "center", fontWeight: "600" },
+  openBtn: {
+    ...common.buttonBase,
+    backgroundColor: theme.colors.primaryAlt,
+  },
+  btnText: common.buttonText,
 });
 
 export default DocumentDetailView;

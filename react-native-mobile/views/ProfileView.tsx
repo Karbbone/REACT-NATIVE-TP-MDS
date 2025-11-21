@@ -1,12 +1,12 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
+import { common, theme } from "../styles/theme";
 
 const ProfileView: React.FC = () => {
   const { user, logout } = useAuth();
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Profil</Text>
       <Text style={styles.label}>Email:</Text>
       <Text style={styles.value}>{user?.email}</Text>
       <TouchableOpacity style={styles.btn} onPress={logout}>
@@ -17,12 +17,18 @@ const ProfileView: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 24 },
-  label: { fontSize: 14, color: "#555" },
-  value: { fontSize: 16, marginBottom: 32 },
-  btn: { backgroundColor: "#FF3B30", padding: 14, borderRadius: 8 },
-  btnText: { color: "#fff", fontWeight: "600", textAlign: "center" },
+  container: { ...common.container, padding: theme.spacing(2) },
+  label: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+  },
+  value: {
+    fontSize: theme.typography.body,
+    marginBottom: theme.spacing(4),
+    color: theme.colors.text,
+  },
+  btn: { ...common.buttonBase, backgroundColor: theme.colors.danger },
+  btnText: common.buttonText,
 });
 
 export default ProfileView;
