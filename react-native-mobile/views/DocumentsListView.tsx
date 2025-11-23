@@ -65,7 +65,7 @@ const DocumentsListView: React.FC = () => {
                 activeCategory === c.id && styles.catChipTextActive,
               ]}
             >
-              {c.name}
+              {c.nom}
             </Text>
           </TouchableOpacity>
         ))}

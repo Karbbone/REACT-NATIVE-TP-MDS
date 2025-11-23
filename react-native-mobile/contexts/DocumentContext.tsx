@@ -2,10 +2,11 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth, useAuthenticatedFetch } from "./AuthContext";
 
 export type DocumentFile = {
   uri: string;
@@ -15,9 +16,8 @@ export type DocumentFile = {
 };
 
 export type Category = {
-  id: string;
-  name: string;
-  createdAt: string;
+  id: string | number;
+  nom: string;
 };
 
 export type DocumentItem = {
@@ -34,6 +34,8 @@ export type DocumentItem = {
 type DocumentContextType = {
   documents: DocumentItem[];
   categories: Category[];
+  isLoadingCategories: boolean;
+  fetchCategories: () => Promise<void>;
   create: (
     data: Pick<DocumentItem, "title" | "content"> & {
       file?: DocumentFile;
@@ -49,27 +51,34 @@ type DocumentContextType = {
   remove: (id: string) => boolean;
   byId: (id: string) => DocumentItem | undefined;
   // Catégories CRUD
-  createCategory: (name: string) => void;
-  updateCategory: (id: string, name: string) => boolean;
-  removeCategory: (id: string) => boolean; // refuse si documents liés
+  createCategory: (name: string) => Promise<void>;
+  updateCategory: (id: string | number, name: string) => Promise<void>;
+  removeCategory: (id: string | number) => Promise<void>;
 };
 
 const DocumentContext = createContext<DocumentContextType>({
   documents: [],
   categories: [],
+  isLoadingCategories: false,
+  fetchCategories: async () => {},
   create: () => {},
   update: () => false,
   remove: () => false,
   byId: () => undefined,
-  createCategory: () => {},
-  updateCategory: () => false,
-  removeCategory: () => false,
+  createCategory: async () => {},
+  updateCategory: async () => {},
+  removeCategory: async () => {},
 });
+
+// Pour Android Emulator: utilisez 10.0.2.2
+// Pour iOS Simulator: utilisez localhost
+// Pour appareil physique: utilisez l'IP de votre machine (ex: 192.168.1.X)
+const API_BASE_URL = "http://10.0.2.2:8080";
 
 export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [documents, setDocuments] = useState<DocumentItem[]>([
     {
       id: "d1",
@@ -78,7 +87,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
       ownerId: "cleme",
       ownerEmail: "cleme@example.com",
       createdAt: new Date().toISOString(),
-      categoryId: "c2", // Fonctionnel
+      categoryId: "c2",
     },
     {
       id: "d2",
@@ -87,13 +96,42 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
       ownerId: "alice",
       ownerEmail: "alice@example.com",
       createdAt: new Date().toISOString(),
-      categoryId: "c1", // Architecture
+      categoryId: "c1",
     },
   ]);
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "c1", name: "Architecture", createdAt: new Date().toISOString() },
-    { id: "c2", name: "Fonctionnel", createdAt: new Date().toISOString() },
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
+  // Récupération des catégories depuis l'API
+  const fetchCategories = useCallback(async () => {
+    if (!token) return;
+    
+    setIsLoadingCategories(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/categories`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des catégories:", error);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, [token]);
+
+  // Charger les catégories au montage et quand le token change
+  React.useEffect(() => {
+    if (token) {
+      fetchCategories();
+    }
+  }, [token, fetchCategories]);
 
   const create: DocumentContextType["create"] = useCallback(
     ({ title, content, file, categoryId }) => {
@@ -133,46 +171,79 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [documents, user]
   );
-  // Catégories
+  // Catégories CRUD avec API
   const createCategory: DocumentContextType["createCategory"] = useCallback(
-    (name) => {
-      const cat: Category = {
-        id: Math.random().toString(36).slice(2),
-        name: name.trim(),
-        createdAt: new Date().toISOString(),
-      };
-      setCategories((prev) => [cat, ...prev]);
+    async (name) => {
+      if (!token) return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/categories`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nom: name.trim() }),
+        });
+
+        if (response.ok) {
+          await fetchCategories(); // Recharger la liste
+        }
+      } catch (error) {
+        console.error("Erreur lors de la création de la catégorie:", error);
+        throw error;
+      }
     },
-    []
+    [token, fetchCategories]
   );
 
   const updateCategory: DocumentContextType["updateCategory"] = useCallback(
-    (id, name) => {
-      let exists = false;
-      setCategories((prev) =>
-        prev.map((c) => {
-          if (c.id === id) {
-            exists = true;
-            return { ...c, name: name.trim() };
-          }
-          return c;
-        })
-      );
-      return exists;
+    async (id, name) => {
+      if (!token) return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nom: name.trim() }),
+        });
+
+        if (response.ok) {
+          await fetchCategories(); // Recharger la liste
+        }
+      } catch (error) {
+        console.error("Erreur lors de la mise à jour de la catégorie:", error);
+        throw error;
+      }
     },
-    []
+    [token, fetchCategories]
   );
 
   const removeCategory: DocumentContextType["removeCategory"] = useCallback(
-    (id) => {
-      // refuse suppression si documents liés
-      const hasDocs = documents.some((d) => d.categoryId === id);
-      if (hasDocs) return false;
-      const before = categories.length;
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      return categories.length !== before;
+    async (id) => {
+      if (!token) return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          await fetchCategories(); // Recharger la liste
+        }
+      } catch (error) {
+        console.error("Erreur lors de la suppression de la catégorie:", error);
+        throw error;
+      }
     },
-    [documents, categories]
+    [token, fetchCategories]
   );
 
   const remove: DocumentContextType["remove"] = useCallback(
@@ -194,6 +265,8 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
     () => ({
       documents,
       categories,
+      isLoadingCategories,
+      fetchCategories,
       create,
       update,
       remove,
@@ -205,6 +278,8 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
     [
       documents,
       categories,
+      isLoadingCategories,
+      fetchCategories,
       create,
       update,
       remove,

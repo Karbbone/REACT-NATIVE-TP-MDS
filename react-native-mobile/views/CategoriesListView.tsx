@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   StyleSheet,
@@ -14,44 +15,70 @@ import { common, theme } from "../styles/theme";
 const CategoriesListView: React.FC = () => {
   const {
     categories,
+    isLoadingCategories,
     createCategory,
     updateCategory,
     removeCategory,
     documents,
   } = useDocuments();
   const [name, setName] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    createCategory(trimmed);
-    setName("");
+    
+    setIsSubmitting(true);
+    try {
+      await createCategory(trimmed);
+      setName("");
+    } catch (error: unknown) {
+      Alert.alert("Erreur", "Impossible de créer la catégorie");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const startEdit = (id: string, current: string) => {
+  const startEdit = (id: string | number, current: string) => {
     setEditingId(id);
     setEditingName(current);
   };
 
-  const saveEdit = () => {
-    if (!editingId) return;
-    const ok = updateCategory(editingId, editingName);
-    if (!ok) Alert.alert("Erreur", "Catégorie introuvable");
-    setEditingId(null);
-    setEditingName("");
+  const saveEdit = async () => {
+    if (editingId === null) return;
+    
+    try {
+      await updateCategory(editingId, editingName);
+      setEditingId(null);
+      setEditingName("");
+    } catch (error: unknown) {
+      Alert.alert("Erreur", "Impossible de mettre à jour la catégorie");
+    }
   };
 
-  const deleteCat = (id: string) => {
+  const deleteCat = async (id: string | number) => {
     const linked = documents.some((d) => d.categoryId === id);
     if (linked) {
       Alert.alert("Impossible", "Des documents utilisent cette catégorie.");
       return;
     }
-    const ok = removeCategory(id);
-    if (!ok) Alert.alert("Erreur", "Suppression impossible.");
+    
+    try {
+      await removeCategory(id);
+    } catch (error: unknown) {
+      Alert.alert("Erreur", "Suppression impossible.");
+    }
   };
+
+  if (isLoadingCategories) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -61,14 +88,23 @@ const CategoriesListView: React.FC = () => {
           placeholder="Nouvelle catégorie"
           value={name}
           onChangeText={setName}
+          editable={!isSubmitting}
         />
-        <TouchableOpacity style={styles.addBtn} onPress={submit}>
-          <Text style={styles.addTxt}>Ajouter</Text>
+        <TouchableOpacity 
+          style={[styles.addBtn, isSubmitting && styles.btnDisabled]} 
+          onPress={submit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.addTxt}>Ajouter</Text>
+          )}
         </TouchableOpacity>
       </View>
       <FlatList
         data={categories}
-        keyExtractor={(c) => c.id}
+        keyExtractor={(c) => String(c.id)}
         renderItem={({ item }) => (
           <View style={styles.catRow}>
             {editingId === item.id ? (
@@ -78,7 +114,7 @@ const CategoriesListView: React.FC = () => {
                 onChangeText={setEditingName}
               />
             ) : (
-              <Text style={styles.catName}>{item.name}</Text>
+              <Text style={styles.catName}>{item.nom}</Text>
             )}
             {editingId === item.id ? (
               <TouchableOpacity style={styles.saveBtn} onPress={saveEdit}>
@@ -87,7 +123,7 @@ const CategoriesListView: React.FC = () => {
             ) : (
               <TouchableOpacity
                 style={styles.editBtn}
-                onPress={() => startEdit(item.id, item.name)}
+                onPress={() => startEdit(item.id, item.nom)}
               >
                 <Text style={styles.btnTxt}>Éditer</Text>
               </TouchableOpacity>
@@ -108,6 +144,13 @@ const CategoriesListView: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: common.container,
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  btnDisabled: {
+    opacity: 0.6,
+  },
   newRow: {
     flexDirection: "row",
     marginBottom: theme.spacing(1.5),
