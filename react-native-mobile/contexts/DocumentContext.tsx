@@ -2,11 +2,10 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
-import { useAuth, useAuthenticatedFetch } from "./AuthContext";
+import { useAuth } from "./AuthContext";
 
 export type DocumentFile = {
   uri: string;
@@ -105,12 +104,12 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
   // Récupération des catégories depuis l'API
   const fetchCategories = useCallback(async () => {
     if (!token) return;
-    
+
     setIsLoadingCategories(true);
     try {
       const response = await fetch(`${API_BASE_URL}/categories`, {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
@@ -175,12 +174,12 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
   const createCategory: DocumentContextType["createCategory"] = useCallback(
     async (name) => {
       if (!token) return;
-      
+
       try {
         const response = await fetch(`${API_BASE_URL}/categories`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ nom: name.trim() }),
@@ -200,12 +199,12 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateCategory: DocumentContextType["updateCategory"] = useCallback(
     async (id, name) => {
       if (!token) return;
-      
+
       try {
         const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ nom: name.trim() }),
@@ -225,12 +224,12 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({
   const removeCategory: DocumentContextType["removeCategory"] = useCallback(
     async (id) => {
       if (!token) return;
-      
+
       try {
         const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });

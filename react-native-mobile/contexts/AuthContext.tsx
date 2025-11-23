@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       console.log(`Tentative de connexion à: ${API_BASE_URL}/users/login`);
-      
+
       const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: "POST",
         headers: {
@@ -74,11 +74,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(data.user);
     } catch (err) {
       console.error("Erreur de connexion:", err);
-      const errorMessage = err instanceof Error ? err.message : "Erreur de connexion";
-      
+      const errorMessage =
+        err instanceof Error ? err.message : "Erreur de connexion";
+
       // Message d'erreur plus détaillé pour les problèmes réseau
       if (err instanceof TypeError && err.message.includes("Network")) {
-        setError("Impossible de contacter le serveur. Vérifiez que l'API est démarrée et l'URL correcte.");
+        setError(
+          "Impossible de contacter le serveur. Vérifiez que l'API est démarrée et l'URL correcte."
+        );
       } else {
         setError(errorMessage);
       }

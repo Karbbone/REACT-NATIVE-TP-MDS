@@ -29,7 +29,7 @@ const CategoriesListView: React.FC = () => {
   const submit = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    
+
     setIsSubmitting(true);
     try {
       await createCategory(trimmed);
@@ -48,7 +48,7 @@ const CategoriesListView: React.FC = () => {
 
   const saveEdit = async () => {
     if (editingId === null) return;
-    
+
     try {
       await updateCategory(editingId, editingName);
       setEditingId(null);
@@ -64,7 +64,7 @@ const CategoriesListView: React.FC = () => {
       Alert.alert("Impossible", "Des documents utilisent cette catégorie.");
       return;
     }
-    
+
     try {
       await removeCategory(id);
     } catch (error: unknown) {
@@ -90,8 +90,8 @@ const CategoriesListView: React.FC = () => {
           onChangeText={setName}
           editable={!isSubmitting}
         />
-        <TouchableOpacity 
-          style={[styles.addBtn, isSubmitting && styles.btnDisabled]} 
+        <TouchableOpacity
+          style={[styles.addBtn, isSubmitting && styles.btnDisabled]}
           onPress={submit}
           disabled={isSubmitting}
         >
