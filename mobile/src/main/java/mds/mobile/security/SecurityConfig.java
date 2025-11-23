@@ -32,9 +32,12 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // Endpoints publics explicites
                         .requestMatchers("/users/register", "/users/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/categories/**").permitAll() // catégories en lecture publiques
-                        .requestMatchers(HttpMethod.GET, "/documents/**").permitAll() // documents en lecture publiques
+                        .requestMatchers("/documents/**").permitAll() // Ajout sans restriction de méthode
+                        .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/documents/**").permitAll() // existant (redondant mais sûr)
+                        // Toute autre requête nécessite auth
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
