@@ -60,11 +60,11 @@ public class CategoryController {
         return categoryRepository.findById(id)
                 .<ResponseEntity<?>>map(category -> {
                     // Check if another category with the same name exists
-                    categoryRepository.findByName(request.name()).ifPresent(existing -> {
-                        if (!existing.getId().equals(id)) {
-                            throw new IllegalStateException("Category name already exists");
-                        }
-                    });
+                    var existingWithSameName = categoryRepository.findByName(request.name());
+                    if (existingWithSameName.isPresent() && !existingWithSameName.get().getId().equals(id)) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(Map.of("error", "category_exists", "message", "A category with this name already exists"));
+                    }
 
                     category.setName(request.name());
                     Category updated = categoryRepository.save(category);
