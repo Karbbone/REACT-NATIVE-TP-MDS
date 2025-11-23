@@ -1,6 +1,8 @@
 package mds.mobile.document;
 
 import mds.mobile.security.CurrentUserService;
+import mds.mobile.category.CategoryRepository;
+import mds.mobile.category.Category;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,10 +19,12 @@ public class DocumentController {
 
     private final DocumentRepository documentRepository;
     private final CurrentUserService currentUserService;
+    private final CategoryRepository categoryRepository;
 
-    public DocumentController(DocumentRepository documentRepository, CurrentUserService currentUserService) {
+    public DocumentController(DocumentRepository documentRepository, CurrentUserService currentUserService, CategoryRepository categoryRepository) {
         this.documentRepository = documentRepository;
         this.currentUserService = currentUserService;
+        this.categoryRepository = categoryRepository;
     }
 
     /**
@@ -54,6 +58,14 @@ public class DocumentController {
                     }
                     if (request.description() != null) {
                         document.setDescription(request.description());
+                    }
+                    if (request.categorieId() != null) {
+                        Category categorie = categoryRepository.findById(request.categorieId()).orElse(null);
+                        if (categorie == null) {
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                    .body(Map.of("error", "invalid_category", "message", "Catégorie introuvable"));
+                        }
+                        document.setCategorie(categorie);
                     }
 
                     document.setDateModification(LocalDateTime.now());

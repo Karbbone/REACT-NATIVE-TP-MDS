@@ -3,6 +3,7 @@ package mds.mobile.document;
 import jakarta.persistence.*;
 import lombok.*;
 import mds.mobile.user.User;
+import mds.mobile.category.Category; // added import
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,6 +28,9 @@ public class Document {
 
     @ManyToOne
     private User proprietaire; // L'utilisateur qui a posté le document
+
+    @ManyToOne
+    private Category categorie; // Catégorie du document
 
     private LocalDateTime dateDepot; // Date de dépôt
     private LocalDateTime dateModification; // Date de dernière modification

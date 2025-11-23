@@ -11,11 +11,16 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
 
@@ -34,42 +39,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userId;
 
-        // Vérifier si le header Authorization existe et commence par "Bearer "
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (log.isDebugEnabled()) {
+                log.debug("No Bearer token for path {} - header={} ", request.getRequestURI(), authHeader);
+            }
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extraire le token
         jwt = authHeader.substring(7);
+        if (log.isDebugEnabled()) {
+            log.debug("Attempting JWT auth for path {} tokenLength={} ", request.getRequestURI(), jwt.length());
+        }
 
         try {
-            // Extraire l'userId du token
             userId = jwtService.extractUserId(jwt);
+            if (log.isDebugEnabled()) {
+                log.debug("Extracted userId {} from token", userId);
+            }
 
-            // Si l'userId existe et qu'il n'y a pas déjà d'authentification dans le contexte
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                // Valider le token
                 if (jwtService.validateToken(jwt)) {
-                    // Créer l'objet d'authentification
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userId,
                             null,
-                            new ArrayList<>() // Pas de rôles pour l'instant
+                            new ArrayList<>()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    // Définir l'authentification dans le contexte de sécurité
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Authentication successful for userId {} on path {}", userId, request.getRequestURI());
+                    }
+                } else if (log.isDebugEnabled()) {
+                    log.debug("Token validation failed (expired or invalid) for path {}", request.getRequestURI());
                 }
             }
         } catch (Exception e) {
-            // Si le token est invalide, on continue sans authentification
-            logger.error("Cannot set user authentication: " + e.getMessage());
+            log.error("JWT processing error on path {}: {}", request.getRequestURI(), e.getMessage());
         }
 
         filterChain.doFilter(request, response);
     }
 }
-
