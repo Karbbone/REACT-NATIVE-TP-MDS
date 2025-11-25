@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   StyleSheet,
@@ -9,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Button, Card, EmptyState, Input, LoadingSpinner } from "../components";
 import { useDocuments } from "../contexts/DocumentContext";
 import { common, theme } from "../styles/theme";
 
@@ -73,70 +73,65 @@ const CategoriesListView: React.FC = () => {
   };
 
   if (isLoadingCategories) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.newRow}>
-        <TextInput
-          style={styles.input}
+        <Input
           placeholder="Nouvelle catégorie"
           value={name}
           onChangeText={setName}
           editable={!isSubmitting}
+          containerStyle={{ flex: 1, marginBottom: 0 }}
         />
-        <TouchableOpacity
-          style={[styles.addBtn, isSubmitting && styles.btnDisabled]}
+        <Button
+          title="Ajouter"
+          variant="primary"
           onPress={submit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.addTxt}>Ajouter</Text>
-          )}
-        </TouchableOpacity>
+          isLoading={isSubmitting}
+          fullWidth={false}
+          style={{ paddingHorizontal: theme.spacing(2) }}
+        />
       </View>
       <FlatList
         data={categories}
         keyExtractor={(c) => String(c.id)}
         renderItem={({ item }) => (
-          <View style={styles.catRow}>
-            {editingId === item.id ? (
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={editingName}
-                onChangeText={setEditingName}
-              />
-            ) : (
-              <Text style={styles.catName}>{item.nom}</Text>
-            )}
-            {editingId === item.id ? (
-              <TouchableOpacity style={styles.saveBtn} onPress={saveEdit}>
-                <Text style={styles.btnTxt}>OK</Text>
-              </TouchableOpacity>
-            ) : (
+          <Card>
+            <View style={styles.catRow}>
+              {editingId === item.id ? (
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  value={editingName}
+                  onChangeText={setEditingName}
+                />
+              ) : (
+                <Text style={styles.catName}>{item.nom}</Text>
+              )}
+              {editingId === item.id ? (
+                <TouchableOpacity style={styles.saveBtn} onPress={saveEdit}>
+                  <Text style={styles.btnTxt}>OK</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.editBtn}
+                  onPress={() => startEdit(item.id, item.nom)}
+                >
+                  <Text style={styles.btnTxt}>Éditer</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
-                style={styles.editBtn}
-                onPress={() => startEdit(item.id, item.nom)}
+                style={styles.deleteBtn}
+                onPress={() => deleteCat(item.id)}
               >
-                <Text style={styles.btnTxt}>Éditer</Text>
+                <Text style={styles.btnTxt}>X</Text>
               </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => deleteCat(item.id)}
-            >
-              <Text style={styles.btnTxt}>X</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          </Card>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>Aucune catégorie</Text>}
+        ListEmptyComponent={<EmptyState message="Aucune catégorie" icon="📋" />}
       />
     </View>
   );

@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -38,7 +39,28 @@ const DocumentsStackScreens = () => (
 );
 
 const MainTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: true }}>
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      headerShown: true,
+      tabBarIcon: ({ focused, color, size }) => {
+        let iconName: keyof typeof Ionicons.glyphMap;
+
+        if (route.name === "Documents") {
+          iconName = focused ? "document-text" : "document-text-outline";
+        } else if (route.name === "Catégories") {
+          iconName = focused ? "folder" : "folder-outline";
+        } else if (route.name === "Profil") {
+          iconName = focused ? "person" : "person-outline";
+        } else {
+          iconName = "help-outline";
+        }
+
+        return <Ionicons name={iconName} size={size} color={color} />;
+      },
+      tabBarActiveTintColor: "#007AFF",
+      tabBarInactiveTintColor: "gray",
+    })}
+  >
     <Tab.Screen
       name="Documents"
       component={DocumentsStackScreens}

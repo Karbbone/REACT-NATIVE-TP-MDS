@@ -1,13 +1,6 @@
 import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { Button, Input } from "../components";
 import { useAuth } from "../contexts/AuthContext";
 
 export const LoginView: React.FC = () => {
@@ -32,34 +25,33 @@ export const LoginView: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Connexion</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mot de passe"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TouchableOpacity
-        style={[styles.button, isLoading && styles.buttonDisabled]}
-        onPress={onLogin}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Se connecter</Text>
-        )}
-      </TouchableOpacity>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      <View style={styles.header}>
+        <Text style={styles.icon}>📱</Text>
+        <Text style={styles.title}>Bienvenue</Text>
+        <Text style={styles.subtitle}>Connectez-vous pour continuer</Text>
+      </View>
+      <View style={styles.form}>
+        <Input
+          placeholder="Email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <Input
+          placeholder="Mot de passe"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <Button
+          title="Se connecter"
+          variant="primary"
+          onPress={onLogin}
+          isLoading={isLoading}
+        />
+        {error && <Text style={styles.errorText}>{error}</Text>}
+      </View>
     </View>
   );
 };
@@ -67,35 +59,47 @@ export const LoginView: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#f8f9fa",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "600",
-    marginBottom: 24,
+  header: {
+    backgroundColor: "#007AFF",
+    paddingTop: 80,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  icon: {
+    fontSize: 48,
     textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
     marginBottom: 16,
   },
-  button: { backgroundColor: "#007AFF", padding: 14, borderRadius: 8 },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: {
+  title: {
+    fontSize: 32,
+    fontWeight: "700",
     color: "#fff",
     textAlign: "center",
-    fontWeight: "600",
+    marginBottom: 8,
+  },
+  subtitle: {
     fontSize: 16,
+    color: "rgba(255, 255, 255, 0.9)",
+    textAlign: "center",
+  },
+  form: {
+    padding: 24,
+    marginTop: 20,
   },
   errorText: {
-    color: "red",
+    color: "#dc3545",
     marginTop: 16,
     textAlign: "center",
+    fontSize: 14,
   },
 });
 

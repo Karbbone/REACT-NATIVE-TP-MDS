@@ -1,15 +1,10 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { Button, CategoryChip, Input } from "../components";
 import { DocumentFile, useDocuments } from "../contexts/DocumentContext";
 import { RootStackParamList } from "../navigation/types";
 import { common, theme } from "../styles/theme";
@@ -27,25 +22,35 @@ const DocumentFormView: React.FC = () => {
   const [title, setTitle] = useState(existing?.title || "");
   const [content, setContent] = useState(existing?.content || "");
   const [file, setFile] = useState<DocumentFile | undefined>(existing?.file);
-  const [categoryId, setCategoryId] = useState<string | undefined>(
+  const [categoryId, setCategoryId] = useState<string | number | undefined>(
     existing?.categoryId
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({ title: existing ? "Modifier" : "Nouveau" });
   }, [existing, navigation]);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (!title.trim()) {
       Alert.alert("Erreur", "Titre requis");
       return;
     }
-    if (existing) {
-      update(existing.id, { title, content, file, categoryId });
-    } else {
-      create({ title, content, file, categoryId });
+
+    setIsSubmitting(true);
+    try {
+      if (existing) {
+        update(existing.id, { title, content, file, categoryId });
+      } else {
+        await create({ title, content, file, categoryId });
+      }
+      navigation.goBack();
+    } catch (error: unknown) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      Alert.alert("Erreur", "Impossible de sauvegarder le document");
+    } finally {
+      setIsSubmitting(false);
     }
-    navigation.goBack();
   };
 
   const pickFile = async () => {
@@ -65,56 +70,83 @@ const DocumentFormView: React.FC = () => {
     }
   };
 
+  const takePhoto = async () => {
+    // Demander la permission d'accès à la caméra
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert(
+        "Permission refusée",
+        "Vous devez autoriser l'accès à la caméra pour prendre une photo."
+      );
+      return;
+    }
+
+    // Ouvrir la caméra
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const photo = result.assets[0];
+      setFile({
+        uri: photo.uri,
+        name: `photo_${Date.now()}.jpg`,
+        mimeType: "image/jpeg",
+        size: photo.fileSize,
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Titre"
-        value={title}
-        onChangeText={setTitle}
-      />
-      <TextInput
-        style={[styles.input, styles.textArea]}
+      <Input placeholder="Titre" value={title} onChangeText={setTitle} />
+      <Input
         placeholder="Contenu"
         value={content}
         onChangeText={setContent}
         multiline
+        style={styles.textArea}
       />
-      <TouchableOpacity style={styles.saveBtn} onPress={onSubmit}>
-        <Text style={styles.saveText}>
-          {existing ? "Enregistrer" : "Créer"}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.attachBtn]} onPress={pickFile}>
-        <Text style={styles.saveText}>Joindre un fichier</Text>
-      </TouchableOpacity>
+      <Button
+        title={existing ? "Enregistrer" : "Créer"}
+        variant="success"
+        onPress={onSubmit}
+        isLoading={isSubmitting}
+      />
+      <View style={styles.fileButtonsContainer}>
+        <Button
+          title="📷 Photo"
+          variant="secondary"
+          onPress={takePhoto}
+          fullWidth={false}
+          style={styles.halfButton}
+        />
+        <Button
+          title="📎 Fichier"
+          variant="secondary"
+          onPress={pickFile}
+          fullWidth={false}
+          style={styles.halfButton}
+        />
+      </View>
       {file && (
         <Text style={styles.fileMeta}>
           Fichier: {file.name} {file.mimeType ? `(${file.mimeType})` : ""}
         </Text>
       )}
-      <Text style={styles.sectionLabel}>Catégorie</Text>
+      <Text style={styles.sectionLabel}>🏷️ Catégorie</Text>
       <View style={styles.catContainer}>
         {categories.map((c) => (
-          <TouchableOpacity
+          <CategoryChip
             key={c.id}
-            style={[
-              styles.catChip,
-              categoryId === c.id && styles.catChipSelected,
-            ]}
+            label={c.nom}
+            selected={categoryId === c.id}
             onPress={() =>
               setCategoryId(categoryId === c.id ? undefined : c.id)
             }
-          >
-            <Text
-              style={[
-                styles.catChipText,
-                categoryId === c.id && styles.catChipTextSelected,
-              ]}
-            >
-              {c.name}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
         {categories.length === 0 && (
           <Text style={styles.emptyCats}>
@@ -128,21 +160,21 @@ const DocumentFormView: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: common.container,
-  input: { ...common.input, marginBottom: theme.spacing(1.5) },
   textArea: { height: 160, textAlignVertical: "top" },
-  saveBtn: { ...common.buttonBase, backgroundColor: theme.colors.success },
-  attachBtn: {
-    ...common.buttonBase,
-    backgroundColor: theme.colors.primaryAlt,
+  fileButtonsContainer: {
+    flexDirection: "row",
+    gap: theme.spacing(1),
     marginTop: theme.spacing(1),
   },
-  saveText: common.buttonText,
+  halfButton: {
+    flex: 1,
+  },
   fileMeta: { marginTop: theme.spacing(1), color: theme.colors.textSecondary },
   sectionLabel: {
     marginTop: theme.spacing(2.5),
     marginBottom: theme.spacing(1),
-    fontWeight: "600",
-    fontSize: theme.typography.body,
+    fontWeight: "700",
+    fontSize: 18,
     color: theme.colors.text,
   },
   catContainer: {
@@ -150,13 +182,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: theme.spacing(1),
   },
-  catChip: common.chip,
-  catChipSelected: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  catChipText: { color: theme.colors.text },
-  catChipTextSelected: { color: "#fff", fontWeight: "600" },
   emptyCats: { color: theme.colors.textSecondary },
 });
 

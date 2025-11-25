@@ -5,10 +5,17 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import {
+  Button,
+  Card,
+  CategoryChip,
+  EmptyState,
+  Input,
+  LoadingSpinner,
+} from "../components";
 import { useDocuments } from "../contexts/DocumentContext";
 import { RootStackParamList } from "../navigation/types";
 import { common, theme } from "../styles/theme";
@@ -16,8 +23,10 @@ import { common, theme } from "../styles/theme";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const DocumentsListView: React.FC = () => {
-  const { documents, categories } = useDocuments();
-  const [activeCategory, setActiveCategory] = useState<string | undefined>();
+  const { documents, categories, isLoadingDocuments } = useDocuments();
+  const [activeCategory, setActiveCategory] = useState<
+    string | number | undefined
+  >();
   const navigation = useNavigation<Nav>();
   const [query, setQuery] = useState("");
 
@@ -33,61 +42,54 @@ const DocumentsListView: React.FC = () => {
     });
   }, [query, documents, activeCategory]);
 
+  if (isLoadingDocuments) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <View style={styles.container}>
-      <TextInput
-        placeholder="Rechercher titre / contenu / auteur"
+      <Input
+        placeholder="🔍 Rechercher titre / contenu / auteur"
         value={query}
         onChangeText={setQuery}
-        style={styles.search}
       />
-      <TouchableOpacity
-        style={styles.createBtn}
+      <Button
+        title="✨ Nouveau document"
+        variant="primary"
         onPress={() => navigation.navigate("DocumentForm", {})}
-      >
-        <Text style={styles.createText}>+ Nouveau document</Text>
-      </TouchableOpacity>
+        style={{ marginBottom: theme.spacing(1.5) }}
+      />
       <View style={styles.catBar}>
         {categories.map((c) => (
-          <TouchableOpacity
+          <CategoryChip
             key={c.id}
-            style={[
-              styles.catChip,
-              activeCategory === c.id && styles.catChipActive,
-            ]}
+            label={c.nom}
+            selected={activeCategory === c.id}
             onPress={() =>
               setActiveCategory(activeCategory === c.id ? undefined : c.id)
             }
-          >
-            <Text
-              style={[
-                styles.catChipText,
-                activeCategory === c.id && styles.catChipTextActive,
-              ]}
-            >
-              {c.nom}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </View>
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("DocumentDetail", { id: item.id })
-            }
-          >
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.meta}>
-              Par {item.ownerId} •{" "}
-              {new Date(item.createdAt).toLocaleDateString()}
-            </Text>
-          </TouchableOpacity>
+          <Card>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("DocumentDetail", { id: item.id })
+              }
+            >
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.meta}>
+                Par {item.ownerEmail} •{" "}
+                {new Date(item.createdAt).toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+          </Card>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>Aucun document</Text>}
+        ListEmptyComponent={<EmptyState message="Aucun document" icon="📄" />}
       />
     </View>
   );
@@ -95,40 +97,17 @@ const DocumentsListView: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: common.container,
-  search: {
-    ...common.input,
-    borderColor: theme.colors.border,
-    marginBottom: theme.spacing(1.5),
-    height: 44,
-  },
-  createBtn: {
-    ...common.buttonBase,
-    backgroundColor: theme.colors.primary,
-    marginBottom: theme.spacing(1.5),
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: theme.colors.text,
+    marginBottom: theme.spacing(2),
   },
   catBar: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: theme.spacing(1),
     marginBottom: theme.spacing(1.5),
-  },
-  catChip: {
-    ...common.chip,
-  },
-  catChipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  catChipText: { color: theme.colors.text },
-  catChipTextActive: { color: "#fff", fontWeight: "600" },
-  createText: common.buttonText,
-  item: {
-    padding: theme.spacing(1.5),
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    borderRadius: theme.radius.md,
-    marginBottom: theme.spacing(1.25),
-    backgroundColor: theme.colors.surface,
   },
   title: {
     fontSize: theme.typography.titleMd,
@@ -137,11 +116,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   meta: { fontSize: theme.typography.small, color: theme.colors.textSecondary },
-  empty: {
-    textAlign: "center",
-    marginTop: theme.spacing(3),
-    color: theme.colors.textSecondary,
-  },
 });
 
 export default DocumentsListView;

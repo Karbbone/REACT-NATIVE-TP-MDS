@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { AuthService } from "../services";
 
 export type User = {
   id: string;
@@ -31,11 +32,6 @@ const AuthContext = createContext<AuthContextType>({
   error: null,
 });
 
-// Pour Android Emulator: utilisez 10.0.2.2
-// Pour iOS Simulator: utilisez localhost
-// Pour appareil physique: utilisez l'IP de votre machine (ex: 192.168.1.X)
-const API_BASE_URL = "http://10.0.2.2:8080";
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -49,26 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
 
     try {
-      console.log(`Tentative de connexion à: ${API_BASE_URL}/users/login`);
-
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      console.log("Statut de la réponse:", response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Erreur API:", errorText);
-        throw new Error("Identifiants incorrects");
-      }
-
-      const data = await response.json();
-      console.log("Connexion réussie");
+      const data = await AuthService.login(email, password);
 
       setToken(data.token);
       setUser(data.user);
@@ -113,13 +90,15 @@ export const useAuthenticatedFetch = () => {
 
   return useCallback(
     async (url: string, options: RequestInit = {}) => {
-      const headers = {
+      const headers: HeadersInit = {
         ...options.headers,
         "Content-Type": "application/json",
       };
 
       if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+        (headers as Record<string, string>)[
+          "Authorization"
+        ] = `Bearer ${token}`;
       }
 
       return fetch(url, {
