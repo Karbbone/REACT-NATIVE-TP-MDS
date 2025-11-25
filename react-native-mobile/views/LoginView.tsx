@@ -1,9 +1,15 @@
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Button, Input } from "../components";
 import { useAuth } from "../contexts/AuthContext";
+import { RootStackParamList } from "../navigation/types";
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export const LoginView: React.FC = () => {
+  const navigation = useNavigation<Nav>();
   const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +57,14 @@ export const LoginView: React.FC = () => {
           isLoading={isLoading}
         />
         {error && <Text style={styles.errorText}>{error}</Text>}
+        <TouchableOpacity
+          style={styles.registerLink}
+          onPress={() => navigation.navigate("Register")}
+        >
+          <Text style={styles.registerText}>
+            Pas de compte ? <Text style={styles.registerTextBold}>S'inscrire</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -100,6 +114,18 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: "center",
     fontSize: 14,
+  },
+  registerLink: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  registerText: {
+    fontSize: 14,
+    color: "#6c757d",
+  },
+  registerTextBold: {
+    fontWeight: "700",
+    color: "#28a745",
   },
 });
 

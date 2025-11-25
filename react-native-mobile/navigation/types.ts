@@ -1,5 +1,6 @@
 export type RootStackParamList = {
   Login: undefined;
+  Register: undefined;
   Main: undefined;
   DocumentsList: undefined;
   DocumentDetail: { id: string };

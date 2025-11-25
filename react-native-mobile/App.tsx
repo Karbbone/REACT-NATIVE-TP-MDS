@@ -13,6 +13,7 @@ import DocumentFormView from "./views/DocumentFormView";
 import DocumentsListView from "./views/DocumentsListView";
 import LoginView from "./views/LoginView";
 import ProfileView from "./views/ProfileView";
+import RegisterView from "./views/RegisterView";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const DocsStack = createNativeStackNavigator<RootStackParamList>();
@@ -80,7 +81,10 @@ const Root = () => {
         {user ? (
           <Stack.Screen name="Main" component={MainTabs} />
         ) : (
-          <Stack.Screen name="Login" component={LoginView} />
+          <>
+            <Stack.Screen name="Login" component={LoginView} />
+            <Stack.Screen name="Register" component={RegisterView} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
